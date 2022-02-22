@@ -57,6 +57,7 @@
                     <div class="form-group">
                       <label for="namaLengkap">Nama lengkap</label>
                       <input
+                        v-model="customerInfo.name"
                         type="text"
                         class="form-control"
                         id="namaLengkap"
@@ -67,6 +68,7 @@
                     <div class="form-group">
                       <label for="namaLengkap">Email Address</label>
                       <input
+                        v-model="customerInfo.email"
                         type="email"
                         class="form-control"
                         id="emailAddress"
@@ -77,6 +79,7 @@
                     <div class="form-group">
                       <label for="namaLengkap">No. HP</label>
                       <input
+                      v-model="customerInfo.number"
                         type="text"
                         class="form-control"
                         id="noHP"
@@ -87,6 +90,7 @@
                     <div class="form-group">
                       <label for="alamatLengkap">Alamat Lengkap</label>
                       <textarea
+                        v-model="customerInfo.address"
                         class="form-control"
                         id="alamatLengkap"
                         rows="3"
@@ -105,10 +109,10 @@
                     <li class="subtotal">
                       ID Transaction <span>#SH12000</span>
                     </li>
-                    <li class="subtotal mt-3">Subtotal <span>$240.00</span></li>
-                    <li class="subtotal mt-3">Pajak <span>10%</span></li>
+                    <li class="subtotal mt-3">Subtotal <span>${{ subTotal }}</span></li>
+                    <li class="subtotal mt-3">Pajak <span>10% | ${{ pajak }}</span></li>
                     <li class="subtotal mt-3">
-                      Total Biaya <span>$440.00</span>
+                      Total Biaya <span>${{ total }}</span>
                     </li>
                     <li class="subtotal mt-3">
                       Bank Transfer <span>Mandiri</span>
@@ -120,7 +124,7 @@
                       Nama Penerima <span>Shayna</span>
                     </li>
                   </ul>
-                  <router-link to="/success" class="proceed-btn">I ALREADY PAID</router-link>
+                  <a @click="checkout()" class="proceed-btn">I ALREADY PAID</a>
                 </div>
               </div>
             </div>
@@ -134,12 +138,19 @@
 
 <script>
 import HeaderShayna from "../components/HeaderShayna.vue";
+import axios from "axios";
 export default {
   components: { HeaderShayna },
   name: "ShopingCart",
   data() {
       return {
-        keranjangUser: []
+        keranjangUser: [],
+        customerInfo: {
+          'name': '',
+          'email': '',
+          'number': '',
+          'address': ''
+        }
       };
     },
     methods: {
@@ -147,6 +158,26 @@ export default {
         this.keranjangUser.splice(index, 1);
         const parsed = JSON.stringify(this.keranjangUser);
         localStorage.setItem('keranjangUser', parsed);
+      },
+      checkout() {
+        let productIds = this.keranjangUser.map((product) => {
+          return product.id
+        });
+
+        let checkoutData = {
+          'name': this.customerInfo.name,
+          'email': this.customerInfo.email,
+          'number': this.customerInfo.number,
+          'address': this.customerInfo.address,
+          "transaction_total": this.total,
+          "transaction_status": "PENDING",
+          "transaction_details": productIds,
+        }
+
+        axios.post("http://shayna-backend.belajarkoding.com/api/checkout", checkoutData)
+            .then(() => this.$router.push('success'))
+            .catch(err => console.log(err))
+            
       }
     },
     mounted() {
@@ -156,6 +187,19 @@ export default {
         } catch(e) {
           localStorage.removeItem('keranjangUser');
         }
+      }
+    },
+    computed: {
+      subTotal() {
+        return this.keranjangUser.reduce((items, data) => {
+          return items + data.price
+        }, 0)
+      },
+      pajak() {
+        return this.subTotal * 0.1
+      },
+      total(){
+        return this.subTotal + this.pajak
       }
     },
 };
