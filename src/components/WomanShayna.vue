@@ -9,7 +9,7 @@
                             <div class="pi-pic">
                                 <img :src="product.galleries[0].photo" alt="" />
                                 <ul>
-                                    <li class="w-icon active">
+                                    <li class="w-icon active" @click="saveKeranjang(productDetails.id, productDetails.name, productDetails.price, productDetails.galleries[0].photo)">
                                         <router-link :to="'/product/' + product.id"><i class="icon_bag_alt"></i></router-link>
                                     </li>
                                     <li class="quick-view"><router-link :to="'/product/' + product.id">+ Quick View</router-link></li>
@@ -46,7 +46,8 @@ export default {
     },
     data() {
         return {
-            products: []
+            products: [],
+            keranjangUser: []
         }
     },
     mounted() {
@@ -55,6 +56,19 @@ export default {
             .then(res => (this.products = res.data.data.data))
             .catch(err => console.log(err))
 
+    },
+    methods: {
+        saveKeranjang(idProduct, nameProduct, priceProduct, photoProduct) {
+            let productStored = {
+                "id": idProduct,
+                "name": nameProduct,
+                "price": priceProduct,
+                "photo": photoProduct
+            }
+            this.keranjangUser.push(productStored);
+            const parsed = JSON.stringify(this.keranjangUser);
+            localStorage.setItem('keranjangUser', parsed);
+        }
     },
 }
 </script>
